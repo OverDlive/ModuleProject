@@ -29,7 +29,7 @@ def capture_images_from_webcam(num_images=6, interval=2):
         if ret:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             captured_images.append(frame)
-            st.image(frame, caption=f"캡처된 이미지 {i + 1}", use_column_width=True)
+            st.image(frame, caption=f"캡처된 이미지 {i + 1}", use_container_width=True)
         else:
             st.warning("이미지 캡처 실패.")
     
