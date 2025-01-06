@@ -14,7 +14,6 @@
 |:-:|:-:|:-:|:-:|:-:|:-:|
 |한동혁<br/>[@OverDlive](https://github.com/OverDlive)<br/>PM, DB 구축|이정민<br/>[@sillage13](https://github.com/sillage13)<br/>모델 학습|송재섭<br/>[@Ddabong](https://github.com/songjae44)<br/>UI 및 모델 학습|석주원<br/>[@JW6022](https://github.com/JW6022)<br/>모델 학습|이채은<br/>[@LCEnetworksecurity](https://github.com/LCEnetworksecurity)<br/>데이터 수집|김준영<br/>[@yfhjhgk](https://github.com/yfhjhgk)<br/>데이터 수집
 
-
 ## 주요 목표
 
 - 실시간 얼굴 인식을 통한 안전하고 신뢰할 수 있는 접근 제어 구현
