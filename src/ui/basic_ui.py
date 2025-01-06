@@ -1,6 +1,7 @@
 import streamlit as st
 import mediapipe as mp
 import cv2
+import time
 import numpy as np
 
 # MediaPipe 초기화
@@ -35,35 +36,36 @@ def capture_images_from_webcam(num_images=6, interval=2):
     return captured_images
 
 # 랜드마크 좌표 추출 및 저장 함수
-def extract_landmarks(image, idx):
+def extract_landmarks(image):
     img_rgb = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     results = face_mesh.process(img_rgb)
 
     landmarks_array = []  # 랜드마크 좌표 저장 리스트
 
     if results.multi_face_landmarks:
-        st.write(f"이미지 {idx + 1}의 랜드마크 좌표:")
         for face_landmarks in results.multi_face_landmarks:
-            for i, landmark in enumerate(face_landmarks.landmark):
+            for landmark in face_landmarks.landmark:
                 landmarks_array.append((landmark.x, landmark.y, landmark.z))
-                st.write(f"랜드마크 {i}: (x={landmark.x:.4f}, y={landmark.y:.4f}, z={landmark.z:.4f})")
-    else:
-        st.write(f"이미지 {idx + 1}에서 얼굴을 감지하지 못했습니다.")
-
     return landmarks_array
+
+# 카운트다운 함수
+def countdown(seconds=3):
+    for i in range(seconds, 0, -1):
+        st.write(f"캡처 시작까지 {i}초 남았습니다...")
+        time.sleep(1)
 
 # 버튼 클릭 시 웹캠 캡처 실행
 if st.button("웹캠 캡처 시작"):
+    countdown(3)  # 3초 카운트다운 실행
     images = capture_images_from_webcam()
     all_landmarks = []  # 모든 이미지의 랜드마크 저장 리스트
 
     if images:
         st.write("캡처된 이미지를 처리 중입니다...")
-        for idx, image_np in enumerate(images):
-            landmarks = extract_landmarks(image_np, idx)
+        for image_np in images:
+            landmarks = extract_landmarks(image_np)
             if landmarks:
                 all_landmarks.append(landmarks)
 
-        # 모든 랜드마크 출력
-        st.write("모든 랜드마크 좌표 배열:")
-        st.json(all_landmarks)  # JSON 형식으로 랜드마크 출력
+        # 결과 저장 알림
+        st.write(f"{len(all_landmarks)}개의 이미지에 대해 랜드마크 좌표를 저장했습니다.")
