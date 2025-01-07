@@ -1,5 +1,6 @@
 import sqlite3
 from typing import List, Tuple
+import uuid
 
 # 데이터베이스 초기화 및 테이블 생성
 def initialize_database(db_name: str = "face_access_control.db"):
@@ -9,12 +10,13 @@ def initialize_database(db_name: str = "face_access_control.db"):
     # 사용자 테이블 생성
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
-        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        face_data BLOB NOT NULL,
-        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        role TEXT DEFAULT 'user'
-    );
+    user_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    face_data BLOB NOT NULL,
+    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role TEXT DEFAULT 'user'
+);
+
     ''')
     
     # 접근 로그 테이블 생성
@@ -47,7 +49,8 @@ def initialize_database(db_name: str = "face_access_control.db"):
 def add_user(name: str, face_data: bytes, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO users (name, face_data) VALUES (?, ?)', (name, face_data))
+    user_id = str(uuid.uuid4())  # UUID 생성
+    cursor.execute('INSERT INTO users (user_id, name, face_data) VALUES (?, ?, ?)', (user_id, name, face_data))
     conn.commit()
     conn.close()
 
