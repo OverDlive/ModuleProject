@@ -1,3 +1,4 @@
+# 특정 폴더 y ->  엄지,새끼손가락 필때 (임의로 지정) 인증해주는 코드(전화손)
 import cv2
 from project.ModuleProject.image_down import download_datset, get_image_folder_file
 import mediapipe as mp
