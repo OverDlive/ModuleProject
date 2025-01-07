@@ -58,3 +58,51 @@ def predict_sign(image_dir: str) -> str:
     result = chr(y_pred[0] + ord('A'))          # 대문자 알파벳
 
     return result
+
+
+
+
+import cv2
+import streamlit as st
+
+def finger_landmark_visualization(image_dir: str):
+    # MediaPipe HandLandmarker 초기화
+    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
+    detector = vision.HandLandmarker.create_from_options(options)
+
+    image1 = mp.Image.create_from_file(image_dir)
+    detection_result = detector.detect(image1)
+    landmarks_df = convert_landmarks_to_dataframe(detection_result)
+
+    image2 = cv2.imread(image_dir)
+    landmark_index = dict()
+    tmp = [[0, 1, 5, 9, 13, 17],
+           [2, 3, 4],
+           [6, 7, 8],
+           [10, 11, 12],
+           [14, 15, 16],
+           [18, 19, 20]]
+
+    for i, v in enumerate(tmp):
+        for j in v:
+            landmark_index[j] = i
+    
+    color = [(48, 48, 255), (180, 229, 255), (128, 64, 128),
+             (0, 204, 255), (48, 255, 48), (192, 101, 21)]
+
+    h, w, _ = image2.shape
+
+    for i in range(0, len(landmarks_df.columns), 3):
+        group = landmarks_df.iloc[0, i:i+3].tolist()  # Series를 리스트로 변환
+        index = i // 3
+        j = landmark_index[index]
+        lx = group[0]
+        ly = group[1]
+
+        px = int(lx * w)
+        py = int(ly * h)
+
+        cv2.circle(image2, (px, py), 2, color[j], -1)
+
+    st.image(image2)
