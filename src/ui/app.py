@@ -15,7 +15,7 @@ def run_app():
     st.sidebar.title("메뉴")
     menu = st.sidebar.selectbox("선택하세요", ["캡처 및 저장", "사용자 조회", "사용자 삭제"])
 
-    # 데이터베이스 초기화
+    # 데이터베이스 초기화 (한 번만 실행)
     if "db_initialized" not in st.session_state:
         initialize_database()
         st.session_state.db_initialized = True
@@ -23,50 +23,57 @@ def run_app():
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
         name = st.text_input("사용자 이름 입력")
-        capture_count = st.number_input("캡처할 이미지 수", min_value=1, max_value=10, value=6, step=1)  # 캡처할 이미지 수 입력
+        capture_count = st.number_input("캡처할 이미지 수", min_value=1, max_value=10, value=6, step=1)
 
-        # 이미지 저장용 리스트
-        captured_images = []
-        all_landmarks = []
-
-        # 캡처 횟수 관리
+        # 세션 상태 초기화
+        if "captured_images" not in st.session_state:
+            st.session_state.captured_images = []
+        if "all_landmarks" not in st.session_state:
+            st.session_state.all_landmarks = []
         if "capture_count_so_far" not in st.session_state:
-            st.session_state.capture_count_so_far = 0  # 시작 시 클릭된 횟수 초기화
+            st.session_state.capture_count_so_far = 0
 
-        # 캡처된 이미지 수가 목표치에 도달할 때까지 반복
+        # 캡처 횟수 관리 및 이미지 캡처
         if st.session_state.capture_count_so_far < capture_count:
-            # 버튼 클릭 시 캡처 진행
             button_text = f"캡처 이미지 {st.session_state.capture_count_so_far + 1} 촬영"
-            if st.button(button_text):  # 버튼 클릭 시 진행
-                # 이미지를 캡처하고 랜드마크 추출
-                images = capture_images_from_webcam(target_count=1, key="capture_button")
+            if st.button(button_text):
+                with st.spinner(f"이미지 {st.session_state.capture_count_so_far + 1} 촬영 중..."):
+                    images = capture_images_from_webcam(target_count=1, key=f"capture_button_{st.session_state.capture_count_so_far + 1}")
                 if images:
-                    landmarks = extract_landmarks(images[0])  # 첫 번째 이미지에서 랜드마크 추출
+                    landmarks = extract_landmarks(images[0])
                     if landmarks:
-                        captured_images.append(images[0])
-                        all_landmarks.append(landmarks)
-                        st.success(f"이미지 {st.session_state.capture_count_so_far + 1}가 성공적으로 캡처되었습니다.")
-                        st.session_state.capture_count_so_far += 1  # 클릭 횟수 증가
+                        st.session_state.captured_images.append(images[0])
+                        st.session_state.all_landmarks.extend(landmarks)
+                        st.session_state.capture_count_so_far += 1
+                        st.success(f"이미지 {st.session_state.capture_count_so_far}가 성공적으로 캡처되었습니다.")
                     else:
                         st.error(f"이미지 {st.session_state.capture_count_so_far + 1}에서 얼굴 랜드마크를 추출할 수 없습니다.")
                 else:
                     st.error(f"이미지 {st.session_state.capture_count_so_far + 1} 캡처에 실패했습니다.")
 
-        # 모든 캡처가 완료되면 랜드마크 저장
-        if st.session_state.capture_count_so_far == capture_count:
-            if all_landmarks:
-                add_user(name, all_landmarks)
-                st.success(f"{name}의 얼굴 데이터가 저장되었습니다.")
+        # 모든 캡처가 완료되면 사용자 추가
+        if st.session_state.capture_count_so_far == capture_count and st.session_state.all_landmarks:
+            if name.strip() == "":
+                st.error("사용자 이름을 입력해주세요.")
             else:
-                st.error("캡처 및 랜드마크 추출에 실패했습니다.")
-    
+                if st.button("데이터베이스에 저장"):
+                    with st.spinner("사용자 데이터 저장 중..."):
+                        user_id = add_user(name, st.session_state.all_landmarks)
+                    st.success(f"{name}의 얼굴 데이터가 성공적으로 저장되었습니다. (User ID: {user_id})")
+                    
+                    # 세션 상태 초기화
+                    st.session_state.captured_images = []
+                    st.session_state.all_landmarks = []
+                    st.session_state.capture_count_so_far = 0
+
     elif menu == "사용자 조회":
         st.header("사용자 조회")
         users = get_all_users()
         if users:
             st.write("저장된 사용자 목록:")
             for user in users:
-                st.write(f"ID: {user[0]}, 이름: {user[1]}")
+                user_id, name, face_data, role = user
+                st.write(f"ID: {user_id}, 이름: {name}, 역할: {role}")
         else:
             st.write("등록된 사용자가 없습니다.")
 
@@ -74,9 +81,16 @@ def run_app():
         st.header("사용자 삭제")
         name = st.text_input("삭제할 사용자 이름 입력")
         if st.button("삭제"):
-            user = find_user_by_name(name)
-            if user:
-                delete_user_by_name(name)
-                st.success(f"{name}의 데이터가 삭제되었습니다.")
+            if name.strip() == "":
+                st.error("사용자 이름을 입력해주세요.")
             else:
-                st.error(f"{name} 사용자를 찾을 수 없습니다.")
+                user = find_user_by_name(name)
+                if user:
+                    delete_user_by_name(name)
+                    st.success(f"{name}의 데이터가 삭제되었습니다.")
+                else:
+                    st.error(f"{name} 사용자를 찾을 수 없습니다.")
+
+# 앱 실행
+if __name__ == "__main__":
+    run_app()
