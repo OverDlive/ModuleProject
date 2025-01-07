@@ -38,7 +38,7 @@ def capture_images_from_webcam(target_count=1, interval=2, key="capture_button")
                 # Z 좌표(lz)는 시각화에 따라 활용
                 cv2.circle(frame, (px, py), 2, (0, 255, 0), -1)
         
-        st.image(frame, caption=f"{i+1}번째 캡처 결과", use_container_width=True)
+        st.image(frame, caption=f"{i+1}번째 캡처 결과")
         captured_frames.append(original_frame)
 
     cap.release()
