@@ -46,7 +46,7 @@ def initialize_database(db_name: str = "face_access_control.db"):
     print("Database initialized successfully.")
 
 # 사용자 추가 (직렬화 포함)
-def add_user(name: str, face_data: List[List[Tuple[float, float, float]]],  # 여러 장이면 List[List[...]]
+def add_user(name: str, face_data: List[List[Tuple[int, int]]],  # 여러 장이면 List[List[...]]
              db_name: str = "face_access_control.db",
              role: str = "user") -> str:
     """
@@ -70,7 +70,7 @@ def add_user(name: str, face_data: List[List[Tuple[float, float, float]]],  # �
     return user_id
 
 # 모든 사용자 조회 (역직렬화 포함)
-def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, str, List[List[Tuple[float, float, float]]], str]]:
+def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, str, List[List[Tuple[int, int]]], str]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT user_id, name, face_data, role FROM users')
@@ -89,7 +89,7 @@ def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, st
     return results
 
 # 사용자 이름으로 조회 (역직렬화 포함)
-def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Optional[Tuple[str, str, List[List[Tuple[float, float, float]]], str]]:
+def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Optional[Tuple[str, str, List[List[Tuple[int, int]]], str]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT user_id, name, face_data, role FROM users WHERE name = ?', (name,))
