@@ -1,7 +1,13 @@
 import streamlit as st
 from face_recog_app.detection import capture_images_from_webcam
 from face_recog_app.authentication import extract_landmarks
-from database.db_control import initialize_database, add_user
+from database.db_control import (
+    initialize_database,
+    add_user,
+    get_all_users,
+    find_user_by_name,
+    delete_user_by_name
+)
 
 # Streamlit 앱 실행
 def run_app():
