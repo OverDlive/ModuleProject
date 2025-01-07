@@ -51,14 +51,31 @@ def add_user(name: str, face_data: bytes, db_name: str = "face_access_control.db
     conn.commit()
     conn.close()
 
-# 사용자 조회
-def get_users(db_name: str = "face_access_control.db") -> List[Tuple]:
+# (수정) 모든 사용자 조회
+def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users')
     users = cursor.fetchall()
     conn.close()
     return users
+
+# (추가) 사용자 이름으로 조회
+def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Tuple or None:
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE name = ?', (name,))
+    user = cursor.fetchone()  # 한 명만 조회한다면 fetchone
+    conn.close()
+    return user
+
+# (추가) 사용자 이름으로 삭제
+def delete_user_by_name(name: str, db_name: str = "face_access_control.db"):
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM users WHERE name = ?', (name,))
+    conn.commit()
+    conn.close()
 
 # 접근 로그 추가
 def log_access(user_id: int, result: str, reason: str = None, db_name: str = "face_access_control.db"):
@@ -94,7 +111,7 @@ def get_alert_events(db_name: str = "face_access_control.db") -> List[Tuple]:
     conn.close()
     return events
 
-# 사용자 삭제
+# (기존) 사용자 user_id로 삭제
 def delete_user(user_id: int, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()

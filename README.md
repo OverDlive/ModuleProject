@@ -44,15 +44,12 @@
    ```bash
    pip install -r requirements.txt
    ```
-2. **데이터베이스 설정**:
+
+2. **애플리케이션 실행**:
    ```bash
-   python init_db.py
+   streamlit run main.py
    ```
-3. **애플리케이션 실행**:
-   ```bash
-   streamlit run app.py
-   ```
-4. **웹 인터페이스 접속**:
+3. **웹 인터페이스 접속**:
    - 브라우저에서 `http://localhost:8501`로 접속
 
 ## 시스템 아키텍처
