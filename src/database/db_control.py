@@ -4,6 +4,7 @@ import pickle
 from typing import List, Tuple, Optional
 
 def initialize_database(db_name: str = "face_access_control.db"):
+
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     
