@@ -35,7 +35,9 @@ def run_app():
 
         # 캡처된 이미지 수가 목표치에 도달할 때까지 반복
         if st.session_state.capture_count_so_far < capture_count:
-            if st.button(f"캡처 이미지 {st.session_state.capture_count_so_far + 1} 촬영"):
+            # 버튼 클릭 시 캡처 진행
+            button_text = f"캡처 이미지 {st.session_state.capture_count_so_far + 1} 촬영"
+            if st.button(button_text):  # 버튼 클릭 시 진행
                 # 이미지를 캡처하고 랜드마크 추출
                 images = capture_images_from_webcam(target_count=1, key="capture_button")
                 if images:
