@@ -90,7 +90,3 @@ def run_app():
                     st.success(f"{name}의 데이터가 삭제되었습니다.")
                 else:
                     st.error(f"{name} 사용자를 찾을 수 없습니다.")
-
-# 앱 실행
-if __name__ == "__main__":
-    run_app()
