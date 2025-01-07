@@ -10,7 +10,9 @@ def run_app():
     menu = st.sidebar.selectbox("선택하세요", ["캡처 및 저장", "사용자 조회", "사용자 삭제"])
 
     # 데이터베이스 초기화
-    initialize_database()
+    if "db_initialized" not in st.session_state:
+        initialize_database()
+        st.session_state.db_initialized = True
 
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
@@ -46,8 +48,22 @@ def run_app():
             st.error("캡처 및 랜드마크 추출에 실패했습니다.")
     
     elif menu == "사용자 조회":
-        # 사용자 조회 로직
-        pass
+        st.header("사용자 조회")
+        users = get_all_users()
+        if users:
+            st.write("저장된 사용자 목록:")
+            for user in users:
+                st.write(f"ID: {user[0]}, 이름: {user[1]}")
+        else:
+            st.write("등록된 사용자가 없습니다.")
+
     elif menu == "사용자 삭제":
-        # 사용자 삭제 로직
-        pass
+        st.header("사용자 삭제")
+        name = st.text_input("삭제할 사용자 이름 입력")
+        if st.button("삭제"):
+            user = find_user_by_name(name)
+            if user:
+                delete_user_by_name(name)
+                st.success(f"{name}의 데이터가 삭제되었습니다.")
+            else:
+                st.error(f"{name} 사용자를 찾을 수 없습니다.")
