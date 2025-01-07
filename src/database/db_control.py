@@ -46,7 +46,7 @@ def initialize_database(db_name: str = "face_access_control.db"):
     print("Database initialized successfully.")
 
 # 사용자 추가 (직렬화 포함)
-def add_user(name: str, face_data: List[Tuple[float, float, float]], db_name: str = "face_access_control.db", role: str = "user"):
+def add_user(name: str, face_data: List[List[Tuple[float, float, float]]], db_name: str = "face_access_control.db", role: str = "user"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     user_id = str(uuid.uuid4())  # UUID 생성
