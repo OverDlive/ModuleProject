@@ -15,7 +15,7 @@ def get_image_folder_file(folder_path):
                 image_files.append(os.path.join(root, file))
     return image_files
 
-def access_files(folder_path):
+def access_files(folder_path, target_folder_name):
     success_files = []
     for root, dirs, files in os.walk(folder_path):
         if target_folder_name in os.path.basename(root):
@@ -31,7 +31,9 @@ dataset_name = "chaitanyakakade77/american-sign-language-dataset"
 dataset_path = download_datset(dataset_name)
 # 다운로드된 데이터셋 경로
 folder_path = 'C:\\Users\\user\\.cache\\kagglehub\\datasets\\chaitanyakakade77\\american-sign-language-dataset\\versions\\1\\ASL_Data'
-target_folder_name = 'Y-samples'
+target_folder_name = 'C:\\Users\\user\\.cache\\kagglehub\\datasets\\chaitanyakakade77\\american-sign-language-dataset\\versions\\1\\ASL_Data\\Y-samples'
 image_files = get_image_folder_file(folder_path)
-sccuess_files = get_image_folder_file(folder_path)
+success_file = access_files(folder_path,target_folder_name)
 print(image_files)
+
+print('특정 폴더{target_folder_name}',success_file)
