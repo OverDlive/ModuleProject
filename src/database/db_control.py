@@ -10,13 +10,12 @@ def initialize_database(db_name: str = "face_access_control.db"):
     # 사용자 테이블 생성
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
-    user_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    face_data BLOB NOT NULL,
-    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    role TEXT DEFAULT 'user'
-);
-
+        user_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        face_data BLOB NOT NULL,
+        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        role TEXT DEFAULT 'user'
+    );
     ''')
     
     # 접근 로그 테이블 생성
