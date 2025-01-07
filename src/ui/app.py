@@ -49,7 +49,7 @@ def run_app():
                 with st.spinner(f"이미지 {st.session_state.capture_count_so_far + 1} 촬영 중..."):
                     images = capture_images_from_webcam(target_count=1, key=f"capture_{st.session_state.capture_count_so_far}")
                 if images:
-                    landmarks = extract_landmarks(images[0])  # [(x, y, z), ...]
+                    landmarks = extract_landmarks(images[0])  # [(x, y), ...]
                     if landmarks:
                         st.session_state.all_landmarks.append(landmarks)
                         st.session_state.capture_count_so_far += 1
