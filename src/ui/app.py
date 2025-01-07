@@ -55,8 +55,7 @@ def run_app():
         # 모든 캡처가 완료되면 랜드마크 저장
         if st.session_state.capture_count_so_far == capture_count:
             if all_landmarks:
-                for landmarks in all_landmarks:
-                    add_user(name, landmarks)
+                add_user(name, all_landmarks)
                 st.success(f"{name}의 얼굴 데이터가 저장되었습니다.")
             else:
                 st.error("캡처 및 랜드마크 추출에 실패했습니다.")
