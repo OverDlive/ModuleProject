@@ -3,8 +3,8 @@ import uuid
 import pickle
 from typing import List, Tuple, Optional
 
+# 데이터베이스 초기화 및 테이블 생성
 def initialize_database(db_name: str = "face_access_control.db"):
-
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     
@@ -45,6 +45,7 @@ def initialize_database(db_name: str = "face_access_control.db"):
     conn.close()
     print("Database initialized successfully.")
 
+# 사용자 추가 (직렬화 포함)
 def add_user(name: str, face_data: List[List[Tuple[float, float, float]]],  # 여러 장이면 List[List[...]]
              db_name: str = "face_access_control.db",
              role: str = "user") -> str:
@@ -68,7 +69,8 @@ def add_user(name: str, face_data: List[List[Tuple[float, float, float]]],  # �
     conn.close()
     return user_id
 
-def get_all_users(db_name: str = "face_access_control.db"):
+# 모든 사용자 조회 (역직렬화 포함)
+def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, str, List[List[Tuple[float, float, float]]], str]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT user_id, name, face_data, role FROM users')
@@ -86,7 +88,8 @@ def get_all_users(db_name: str = "face_access_control.db"):
         results.append((user_id, name, face_data, role))
     return results
 
-def find_user_by_name(name: str, db_name: str = "face_access_control.db"):
+# 사용자 이름으로 조회 (역직렬화 포함)
+def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Optional[Tuple[str, str, List[List[Tuple[float, float, float]]], str]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT user_id, name, face_data, role FROM users WHERE name = ?', (name,))
@@ -102,6 +105,7 @@ def find_user_by_name(name: str, db_name: str = "face_access_control.db"):
     else:
         return None
 
+# 사용자 이름으로 삭제
 def delete_user_by_name(name: str, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -109,6 +113,7 @@ def delete_user_by_name(name: str, db_name: str = "face_access_control.db"):
     conn.commit()
     conn.close()
 
+# 사용자 삭제 (user_id로)
 def delete_user(user_id: str, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -116,17 +121,17 @@ def delete_user(user_id: str, db_name: str = "face_access_control.db"):
     conn.commit()
     conn.close()
 
-# ──────────────────────────
-# 아래 함수들도 user_id 타입을 TEXT로 변경
-# ──────────────────────────
+# 접근 로그 추가
 def log_access(user_id: str, result: str, reason: str = None, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO access_logs (user_id, result, reason) VALUES (?, ?, ?)', (user_id, result, reason))
+    cursor.execute('INSERT INTO access_logs (user_id, result, reason) VALUES (?, ?, ?)',
+                   (user_id, result, reason))
     conn.commit()
     conn.close()
 
-def get_access_logs(db_name: str = "face_access_control.db"):
+# 접근 로그 조회
+def get_access_logs(db_name: str = "face_access_control.db") -> List[Tuple[int, str, str, str, Optional[str]]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT log_id, user_id, attempt_time, result, reason FROM access_logs')
@@ -134,14 +139,17 @@ def get_access_logs(db_name: str = "face_access_control.db"):
     conn.close()
     return rows
 
+# 경고 이벤트 추가
 def add_alert(event_type: str, description: str = None, db_name: str = "face_access_control.db"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO alert_events (event_type, description) VALUES (?, ?)', (event_type, description))
+    cursor.execute('INSERT INTO alert_events (event_type, description) VALUES (?, ?)',
+                   (event_type, description))
     conn.commit()
     conn.close()
 
-def get_alert_events(db_name: str = "face_access_control.db"):
+# 경고 이벤트 조회
+def get_alert_events(db_name: str = "face_access_control.db") -> List[Tuple[int, str, str, Optional[str]]]:
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT alert_id, event_time, event_type, description FROM alert_events')
