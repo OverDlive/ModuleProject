@@ -19,9 +19,13 @@ def capture_images_from_webcam(target_count=1, interval=2, key="capture_button")
             # 랜드마크 추출
             landmarks = extract_landmarks(frame)  # 얼굴 랜드마크 추출
             
-            # 랜드마크 그리기
-            for (x, y) in landmarks:
-                cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)  # 초록색 원으로 랜드마크 그리기
+            if not landmarks:
+                # landmarks가 None 이거나 빈 리스트인 경우 처리
+                print("랜드마크를 찾지 못했습니다.")
+            else:
+                # 랜드마크 그리기
+                for (x, y) in landmarks:
+                    cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)  # 초록색 원으로 랜드마크 그리기
             
             st.image(frame, caption=f"캡처된 이미지", use_container_width=True)  # 랜드마크가 그려진 이미지 출력
         else:
