@@ -10,7 +10,9 @@ def run_app():
     menu = st.sidebar.selectbox("선택하세요", ["캡처 및 저장", "사용자 조회", "사용자 삭제"])
 
     # 데이터베이스 초기화
-    initialize_database()
+    if "db_initialized" not in st.session_state:
+        initialize_database()
+        st.session_state.db_initialized = True
 
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
