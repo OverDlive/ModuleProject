@@ -4,9 +4,6 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import joblib
 
-
-
-
 def convert_landmarks_to_dataframe(detection_result):
     """
     MediaPipe의 손 랜드마크 감지 결과를 판다스 데이터프레임으로 변환합니다.
@@ -45,9 +42,8 @@ def convert_landmarks_to_dataframe(detection_result):
     return df
 
 
-
 def predict_sign(image_dir: str) -> str:
-   # MediaPipe HandLandmarker 초기화
+    # MediaPipe HandLandmarker 초기화
     base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
     options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
     detector = vision.HandLandmarker.create_from_options(options)
