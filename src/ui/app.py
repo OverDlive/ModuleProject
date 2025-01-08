@@ -1,20 +1,19 @@
 import streamlit as st
 from face_recog_app.detection import capture_images_from_webcam, draw_landmarks, extract_landmarks
-from face_recog_app.authentication import authenticate_face_and_gesture, calculate_similarity
+from face_recog_app.authentication import authenticate_face_and_gesture
 from database.db_control import (
     initialize_database,
     add_user,
     get_all_users,
     find_user_by_name,
     delete_user_by_name,
-    log_access
 )
 import numpy as np
 import cv2
 
 # Streamlit 앱 실행
 def run_app():
-    alphabet = 'S'
+    alphabet = 'C'
 
     st.markdown(
         f"""

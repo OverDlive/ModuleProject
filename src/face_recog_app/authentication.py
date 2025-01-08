@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from face_recog_app.detection import extract_landmarks
 from database.db_control import find_user_by_name, log_access
-from face_recog_app.hand_gesture import predict_sign, convert_landmarks_to_dataframe
+from face_recog_app.hand_gesture import predict_sign
 
 # 얼굴 인증을 위한 유사도 계산 함수 (유클리드 거리 기반)
 def calculate_similarity(landmarks1, landmarks2):

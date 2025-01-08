@@ -4,6 +4,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import joblib
 import os
+import numpy as np
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(script_dir, 'hand_landmarker.task')
@@ -56,7 +57,7 @@ def predict_sign(frame) -> str:
     model_data = model_file.read()
     model_file.close()
 
-    base_options = python.BaseOptions(model_asset_buffer = model_data)
+    base_options = python.BaseOptions(model_asset_path = model_data)
     options = vision.HandLandmarkerOptions(base_options=base_options,
                                            num_hands=2, # 탐지 가능한 최대 손 수
                                            min_hand_detection_confidence=0.3, # 탐지 신뢰도 설정
@@ -64,12 +65,16 @@ def predict_sign(frame) -> str:
                                            )
     detector = vision.HandLandmarker.create_from_options(options)
 
+    # frame이 numpy.ndarray일 경우, 이를 uint8로 변환한 후 mp.Image로 변환
+    if frame.dtype != np.uint8:
+        frame = frame.astype(np.uint8)
+
      # OpenCV 프레임을 MediaPipe Image로 변환
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
     # 손 랜드마크 감지
     detection_result = detector.detect(mp_image)
-    
+
     # 손 영역 잘라내기
     #frame = crop_to_hand_area(frame, detection_result)
 
@@ -77,6 +82,7 @@ def predict_sign(frame) -> str:
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
     if landmarks_df.empty:
         return "NO_HAND_DETECTED"
+    
     # 사전 학습된 모델로 손동작 예측
     model = joblib.load(joblib_path)
     y_pred = model.predict(landmarks_df)        # [숫자]
