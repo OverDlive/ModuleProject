@@ -40,8 +40,6 @@ def authenticate_face_and_gesture(name, today_alphabet=None):
         return "웹캠을 열 수 없습니다.", None
 
     # 해상도 설정
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
     st.write(f"웹캠 해상도 설정 완료: {int(actual_width)}x{int(actual_height)}")
