@@ -13,7 +13,7 @@ import cv2
 
 # Streamlit 앱 실행
 def run_app():
-    alphabet = 'C'
+    alphabet = 'S'
 
     st.markdown(
         f"""

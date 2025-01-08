@@ -57,7 +57,7 @@ def predict_sign(frame) -> str:
     model_data = model_file.read()
     model_file.close()
 
-    base_options = python.BaseOptions(model_asset_path = model_data)
+    base_options = python.BaseOptions(model_asset_buffer = model_data)
     options = vision.HandLandmarkerOptions(base_options=base_options,
                                            num_hands=2, # 탐지 가능한 최대 손 수
                                            min_hand_detection_confidence=0.3, # 탐지 신뢰도 설정

@@ -39,14 +39,14 @@ def capture_images_from_webcam(target_count=1, key="capture"):
 
     st.write("웹캠이 정상적으로 열렸습니다. 이미지 캡처를 시작합니다...")
 
-    for i in range(target_count):
-        st.write(f"이미지 {i+1} 캡처 중...")
-        ret, frame = cap.read()
-        if not ret:
-            st.error(f"이미지 {i+1} 캡처에 실패했습니다.")
-            break
-        images.append(frame)
-        st.progress((i + 1) / target_count)  # 캡처 진행 상황 표시
+    #for i in range(target_count):
+        #st.write(f"이미지 {i+1} 캡처 중...")
+    ret, frame = cap.read()
+    if not ret:
+        st.error(f"이미지 캡처에 실패했습니다.")
+        #break
+    images.append(frame)
+    #st.progress((i + 1) / target_count)  # 캡처 진행 상황 표시
 
     cap.release()
     st.write("웹캠이 종료되었습니다.")  # 웹캠 종료 메시지
