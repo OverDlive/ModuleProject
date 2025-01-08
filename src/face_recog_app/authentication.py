@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from face_recog_app.detection import extract_landmarks
 from database.db_control import find_user_by_name, log_access
-from face_recog_app.hand_gesture import predict_sign
+from face_recog_app.hand_gesture import test_hand_gesture, extract_landmarks_hand
 
 # 얼굴 인증을 위한 유사도 계산 함수 (유클리드 거리 기반)
 def calculate_similarity(landmarks1, landmarks2):
@@ -70,7 +70,7 @@ def authenticate_face_and_gesture(name, today_alphabet):
         log_access(user_id, "success", "얼굴 인증 성공")
     
         # 손동작 제스처 추출
-        gesture = predict_sign(frame)  # 손동작 제스처 추출 및 알파벳 예측
+        gesture = test_hand_gesture(frame)  # 손동작 제스처 추출 및 알파벳 예측
 
         # 손동작이 오늘의 알파벳과 일치하는지 확인
         if gesture == today_alphabet:

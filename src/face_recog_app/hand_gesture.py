@@ -5,88 +5,52 @@ from mediapipe.tasks.python import vision
 import joblib
 import os
 import numpy as np
+from tensorflow.keras.models import load_model
+from sklearn.preprocessing import LabelEncoder
+import cv2
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(script_dir, 'hand_landmarker.task')
-joblib_path = os.path.join(script_dir, 'sign_language_model.joblib')
+model_path = os.path.join(script_dir, 'asl_hand_gesture_model.h5')
 
-def convert_landmarks_to_dataframe(detection_result):
-    """
-    MediaPipe의 손 랜드마크 감지 결과를 판다스 데이터프레임으로 변환합니다.
+# Mediapipe 설정
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5)
 
-    Args:
-        detection_result: MediaPipe HandLandmarker의 감지 결과
+# 모델 로드
+model = load_model(model_path)
 
-    Returns:
-        pandas.DataFrame: 각 손가락 랜드마크의 x, y, z 좌표가 포함된 데이터프레임
-    """
-    all_hands_data = []
+# 레이블 디코딩 설정 (학습 시 사용한 LabelEncoder)
+label_encoder = LabelEncoder()
+label_encoder.classes_ = np.array(list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))  # 알파벳 A-Z
 
-    for hand_idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
-        hand_data = []
-
-        # 각 랜드마크의 x, y, z 좌표를 추출
-        for idx, landmark in enumerate(hand_landmarks):
-            hand_data.extend([
-                landmark.x,
-                landmark.y,
-                landmark.z
-            ])
-
-        # 손의 번호와 좌표 데이터를 딕셔너리로 변환
-        hand_dict = {
-            'hand_index': hand_idx,
-            **{f'landmark_{i}_{coord}': val
-               for i in range(21)  # MediaPipe는 각 손마다 21개의 랜드마크를 감지
-               for coord, val in zip(['x', 'y', 'z'], hand_data[i*3:(i+1)*3])}
-        }
-        all_hands_data.append(hand_dict)
-
-    # 데이터프레임 생성
-    df = pd.DataFrame(all_hands_data)
+# 손 랜드마크 추출 함수
+def extract_landmarks_hand(image):
+    # image가 이미 OpenCV 이미지 객체(NumPy 배열)인 경우 처리
+    if isinstance(image, np.ndarray):
+        # 이미지 처리를 바로 진행
+        #image = cv2.imread(image_path)
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        result = hands.process(image_rgb)
+    else:
+        raise ValueError("Input should be a valid image object (NumPy array)")
+    #image = cv2.imread(image_path)
+    #image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #result = hands.process(image_rgb)
     
-    # hand_index 열이 존재할 경우에만 삭제
-    if 'hand_index' in df.columns:
-        df.drop('hand_index', axis=1, inplace=True)
+    if result.multi_hand_landmarks:
+        hand_landmarks = result.multi_hand_landmarks[0]
+        return np.array([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark]).flatten()
+    else:
+        return None
 
-    return df
+# 테스트 함수
+def test_hand_gesture(image):
+    landmarks = extract_landmarks_hand(image)
+    if landmarks is not None:
+        landmarks = landmarks.reshape(1, -1)  # 모델 입력 형식에 맞게 변환
+        prediction = model.predict(landmarks)
+        predicted_label = label_encoder.inverse_transform([np.argmax(prediction)])
+        return predicted_label[0]#, np.max(prediction)  # 예측 레이블과 확률 반환
+    else:
+        return "No hand detected", 0.0
 
-def predict_sign(frame) -> str:
-    # MediaPipe HandLandmarker 초기화
-    model_file = open(model_path, "rb")
-    model_data = model_file.read()
-    model_file.close()
-
-    base_options = python.BaseOptions(model_asset_buffer = model_data)
-    options = vision.HandLandmarkerOptions(base_options=base_options,
-                                           num_hands=2, # 탐지 가능한 최대 손 수
-                                           min_hand_detection_confidence=0.3, # 탐지 신뢰도 설정
-                                           min_tracking_confidence=0.3 # 추적 신뢰도 설정
-                                           )
-    detector = vision.HandLandmarker.create_from_options(options)
-
-    # frame이 numpy.ndarray일 경우, 이를 uint8로 변환한 후 mp.Image로 변환
-    if frame.dtype != np.uint8:
-        frame = frame.astype(np.uint8)
-
-     # OpenCV 프레임을 MediaPipe Image로 변환
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-
-    # 손 랜드마크 감지
-    detection_result = detector.detect(mp_image)
-
-    # 손 영역 잘라내기
-    #frame = crop_to_hand_area(frame, detection_result)
-
-    # 랜드마크 데이터 프레임 생성
-    landmarks_df = convert_landmarks_to_dataframe(detection_result)
-    if landmarks_df.empty:
-        return "NO_HAND_DETECTED"
-    
-    # 사전 학습된 모델로 손동작 예측
-    model = joblib.load(joblib_path)
-    y_pred = model.predict(landmarks_df)        # [숫자]
-    # 숫자를 알파벳 문자로 변환
-    result = chr(y_pred[0] + ord('A'))          # 대문자 알파벳
-
-    return result
