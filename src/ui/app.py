@@ -1,6 +1,9 @@
 import streamlit as st
-from face_recog_app.detection import capture_images_from_webcam
+from face_recog_app.detection import capture_images_from_webcam, draw_landmarks, extract_landmarks
 from face_recog_app.authentication import extract_landmarks, extract_gesture_landmarks
+from ui.app import run_app
+import os,sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),'../../')))
 from database.db_control import (
     initialize_database,
     add_user,
@@ -168,3 +171,5 @@ def run_app():
 
                     # 웹캠 자원 해제
                     cap.release()
+if __name__ == "__main__":
+    run_app()
