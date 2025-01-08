@@ -7,6 +7,7 @@ import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(script_dir, 'hand_landmarker.task')
+joblib_path = os.path.join(script_dir, 'sign_language_model.joblib')
 
 def convert_landmarks_to_dataframe(detection_result):
     """
@@ -42,23 +43,36 @@ def convert_landmarks_to_dataframe(detection_result):
 
     # 데이터프레임 생성
     df = pd.DataFrame(all_hands_data)
-    df.drop('hand_index', axis=1, inplace=True)
+    
+    # hand_index 열이 존재할 경우에만 삭제
+    if 'hand_index' in df.columns:
+        df.drop('hand_index', axis=1, inplace=True)
+
     return df
 
 
-def predict_sign(image_dir: str) -> str:
+def predict_sign(frame) -> str:
     # MediaPipe HandLandmarker 초기화
-    base_options = python.BaseOptions(model_asset_path=model_path)
+    model_file = open(model_path, "rb")
+    model_data = model_file.read()
+    model_file.close()
+
+    base_options = python.BaseOptions(model_asset_buffer = model_data)
     options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
     detector = vision.HandLandmarker.create_from_options(options)
 
-    image = mp.Image.create_from_file(image_dir)
-    detection_result = detector.detect(image)
-
+    # OpenCV 프레임을 MediaPipe Image로 변환
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+    # 손 랜드마크 감지
+    detection_result = detector.detect(mp_image)
+    # 랜드마크 데이터 프레임 생성
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
-    model = joblib.load('sign_language_model.joblib')
+    if landmarks_df.empty:
+        return "NO_HAND_DETECTED"
+    # 사전 학습된 모델로 손동작 예측
+    model = joblib.load(joblib_path)
     y_pred = model.predict(landmarks_df)        # [숫자]
-
+    # 숫자를 알파벳 문자로 변환
     result = chr(y_pred[0] + ord('A'))          # 대문자 알파벳
 
     return result
