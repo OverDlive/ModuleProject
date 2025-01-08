@@ -15,6 +15,18 @@ def calculate_similarity(landmarks1, landmarks2):
     # 평균 차이를 구하여 유사도 반환
     return np.mean(diff)
 
+# 손동작 인증을 위한 이미지 전처리
+'''def preprocess_image(frame):
+    # 이미지 크기 조정
+    resized = cv2.resize(frame, (640, 480))  # 원하는 크기로 조정
+    
+    # 밝기와 대비 조정
+    alpha = 1.5  # 대비
+    beta = 50    # 밝기
+    adjusted = cv2.convertScaleAbs(resized, alpha=alpha, beta=beta)
+    
+    return adjusted'''
+
 # 얼굴 인증 함수
 def authenticate_face_and_gesture(name, today_alphabet):
     # 데이터베이스에서 사용자 정보 가져오기
@@ -34,6 +46,9 @@ def authenticate_face_and_gesture(name, today_alphabet):
     if not ret:
         cap.release()
         return "이미지를 캡처할 수 없습니다.", None
+    
+    # 전처리 적용
+    # frame = preprocess_image(frame)
 
     # 얼굴 랜드마크 추출
     landmarks = extract_landmarks(frame)  # 이제 detection.py에서 호출

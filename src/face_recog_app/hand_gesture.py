@@ -50,7 +50,6 @@ def convert_landmarks_to_dataframe(detection_result):
 
     return df
 
-
 def predict_sign(frame) -> str:
     # MediaPipe HandLandmarker 초기화
     model_file = open(model_path, "rb")
@@ -58,13 +57,21 @@ def predict_sign(frame) -> str:
     model_file.close()
 
     base_options = python.BaseOptions(model_asset_buffer = model_data)
-    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
+    options = vision.HandLandmarkerOptions(base_options=base_options,
+                                           num_hands=2, # 탐지 가능한 최대 손 수
+                                           min_hand_detection_confidence=0.5, # 탐지 신뢰도 설정
+                                           min_tracking_confidence=0.5 # 추적 신뢰도 설정
+                                           )
     detector = vision.HandLandmarker.create_from_options(options)
 
     # OpenCV 프레임을 MediaPipe Image로 변환
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
     # 손 랜드마크 감지
     detection_result = detector.detect(mp_image)
+
+    # 손 영역 잘라내기
+    frame = crop_to_hand_area(frame, detection_result)
+
     # 랜드마크 데이터 프레임 생성
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
     if landmarks_df.empty:
