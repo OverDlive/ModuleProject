@@ -4,51 +4,57 @@ import pickle
 from typing import List, Tuple, Optional
 
 def initialize_database(db_name: str = "face_access_control.db"):
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
-    
-    # 사용자 테이블 (user_id는 TEXT로 UUID 저장)
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        user_id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        face_data BLOB NOT NULL,
-        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        role TEXT DEFAULT 'user'
-    );
-    ''')
+    try:
+        conn = sqlite3.connect(db_name)
+        cursor = conn.cursor()
+        
+        # 사용자 테이블 (user_id는 TEXT로 UUID 저장)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            face_data BLOB NOT NULL,
+            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            role TEXT DEFAULT 'user'
+            gesture_auth TEXT DEFAULT NULL -- 제스처 인증 수단 추가
+        );
+        ''')
 
-    # 접근 로그 테이블 (user_id도 TEXT)
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS access_logs (
-        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
-        attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        result TEXT NOT NULL,
-        reason TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
-    );
-    ''')
+        # 접근 로그 테이블 (user_id도 TEXT)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS access_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            result TEXT NOT NULL,
+            reason TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
+        );
+        ''')
 
-    # 경고 이벤트 테이블
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS alert_events (
-        alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        event_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        event_type TEXT NOT NULL,
-        description TEXT
-    );
-    ''')
+        # 경고 이벤트 테이블
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS alert_events (
+            alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            event_type TEXT NOT NULL,
+            description TEXT
+        );
+        ''')
 
-    conn.commit()
-    conn.close()
-    print("Database initialized successfully.")
+        conn.commit()
+        conn.close()
+        print("Database initialized successfully.")
+    except sqlite3.Error as e:
+        print(f"Error initializing database: {e}")
 
 # 사용자 추가 (직렬화 포함)
 def add_user(name: str, 
              face_data: List[List[Tuple[float, float, float]]],  # 여러 장이면 List[List[...]]
              db_name: str = "face_access_control.db",
-             role: str = "user") -> str:
+             role: str = "user",
+             gesture_auth: Optional[str] = None
+             ) -> str:
     """
     name: 사용자 이름
     face_data: 여러 장의 이미지 랜드마크를 저장하려면 List[List[Tuple]]] 구조를 권장
@@ -61,9 +67,9 @@ def add_user(name: str,
     pickled_face_data = pickle.dumps(face_data)  # BLOB로 직렬화
 
     cursor.execute('''
-        INSERT INTO users (user_id, name, face_data, role)
-        VALUES (?, ?, ?, ?)
-    ''', (user_id, name, pickled_face_data, role))
+        INSERT INTO users (user_id, name, face_data, role, gesture_auth)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (user_id, name, pickled_face_data, role, gesture_auth))
 
     conn.commit()
     conn.close()

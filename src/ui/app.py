@@ -32,6 +32,12 @@ def run_app():
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
         name = st.text_input("사용자 이름 입력")
+        # 선택지 목록
+        gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+        # 선택 박스 생성
+        selected_option = st.selectbox("인증 수단으로 사용할 제스처를 선택하세요:", gesture_options)
+        # 선택된 옵션 표시
+        st.write(f"선택된 옵션: {selected_option}")
         capture_count = st.number_input("캡처할 이미지 수", min_value=1, max_value=10, value=6, step=1)
 
         # 세션 상태 초기화
@@ -102,7 +108,7 @@ def run_app():
                 st.error("사용자 이름을 입력하세요.")
             else:
                 # 얼굴 및 손동작 인증 함수 호출
-                result, frame = authenticate_face_and_gesture(name, alphabet)
+                result, frame = authenticate_face_and_gesture(name, selected_option)
 
                 # 캡처된 이미지 출력
                 if frame is not None:

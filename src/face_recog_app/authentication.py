@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from face_recog_app.detection import extract_landmarks
 from database.db_control import find_user_by_name, log_access
-from face_recog_app.hand_gesture import test_hand_gesture, extract_landmarks_hand
+from face_recog_app.hand_gesture import gesture_detect
 
 # 얼굴 인증을 위한 유사도 계산 함수 (유클리드 거리 기반)
 def calculate_similarity(landmarks1, landmarks2):
@@ -28,7 +28,7 @@ def calculate_similarity(landmarks1, landmarks2):
     return adjusted'''
 
 # 얼굴 인증 함수
-def authenticate_face_and_gesture(name, today_alphabet):
+def authenticate_face_and_gesture(name, selected_gesture):
     # 데이터베이스에서 사용자 정보 가져오기
     user = find_user_by_name(name)
     if not user:
@@ -70,17 +70,17 @@ def authenticate_face_and_gesture(name, today_alphabet):
         log_access(user_id, "success", "얼굴 인증 성공")
     
         # 손동작 제스처 추출
-        gesture = test_hand_gesture(frame)  # 손동작 제스처 추출 및 알파벳 예측
+        gesture = gesture_detect(frame)  # 손동작 제스처 추출
 
-        # 손동작이 오늘의 알파벳과 일치하는지 확인
-        if gesture == today_alphabet:
+        # 저장된 제스처와 비교
+        if gesture == selected_gesture:
             log_access(user_id, "success", "얼굴 및 손동작 인증 성공")
             cap.release()
-            return f"인증 성공: {name}, 제스처 알파벳: {gesture}", frame
+            return f"인증 성공: {name}", frame
         else:
             log_access(user_id, "failure", "손동작 인증 실패")
             cap.release()
-            return f"손동작 인증 실패: {gesture} - 오늘의 알파벳과 일치하지 않음.", frame
+            return f"손동작 인증 실패: {gesture} - 저장된 제스처와 일치하지 않음.", frame
     else:
         log_access(user_id, "failure", "얼굴 유사도 낮음")
         cap.release()
