@@ -1,8 +1,18 @@
+import os
+import joblib
 import pandas as pd
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import joblib
+
+import cv2
+import streamlit as st
+
+# 현재 파일 기준 경로 처리
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+model_path = os.path.join(script_dir, 'hand_landmarker.task')
+joblib_path = os.path.join(script_dir, 'sign_language_model.joblib')
 
 def convert_landmarks_to_dataframe(detection_result):
     """
@@ -16,93 +26,132 @@ def convert_landmarks_to_dataframe(detection_result):
     """
     all_hands_data = []
 
+    # detection_result.hand_landmarks: 각 손의 랜드마크 목록
+    # 예: List of [NormalizedLandmark(x=..., y=..., z=...), ...]
     for hand_idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
         hand_data = []
-
-        # 각 랜드마크의 x, y, z 좌표를 추출
         for idx, landmark in enumerate(hand_landmarks):
-            hand_data.extend([
-                landmark.x,
-                landmark.y,
-                landmark.z
-            ])
+            # (x, y, z) 하나씩 추출하여 리스트에 담음
+            hand_data.extend([landmark.x, landmark.y, landmark.z])
 
-        # 손의 번호와 좌표 데이터를 딕셔너리로 변환
         hand_dict = {
             'hand_index': hand_idx,
-            **{f'landmark_{i}_{coord}': val
-               for i in range(21)  # MediaPipe는 각 손마다 21개의 랜드마크를 감지
-               for coord, val in zip(['x', 'y', 'z'], hand_data[i*3:(i+1)*3])}
+            **{
+                f'landmark_{i}_{coord}': val
+                for i in range(21)  # Mediapipe는 각 손마다 21개의 랜드마크를 감지
+                for coord, val in zip(['x', 'y', 'z'], hand_data[i*3:(i+1)*3])
+            }
         }
         all_hands_data.append(hand_dict)
 
-    # 데이터프레임 생성
     df = pd.DataFrame(all_hands_data)
-    df.drop('hand_index', axis=1, inplace=True)
+    # hand_index 열이 존재할 경우에만 삭제
+    if 'hand_index' in df.columns:
+        df.drop('hand_index', axis=1, inplace=True)
+
     return df
 
 
-def predict_sign(image_dir: str) -> str:
-    # MediaPipe HandLandmarker 초기화
-    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+def predict_sign(frame) -> str:
+    """
+    OpenCV frame(이미지)에서 손 랜드마크를 검출한 뒤, 
+    사전 학습된 수어(sign language) 모델로 알파벳을 예측.
+    """
+    # 1) hand_landmarker.task 파일을 버퍼로 로드
+    with open(model_path, "rb") as f:
+        model_data = f.read()
+
+    # 2) Mediapipe HandLandmarker 초기화
+    base_options = python.BaseOptions(model_asset_buffer=model_data)
     options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
     detector = vision.HandLandmarker.create_from_options(options)
 
-    image = mp.Image.create_from_file(image_dir)
-    detection_result = detector.detect(image)
+    # 3) OpenCV BGR 이미지를 Mediapipe Image(SRGB)로 변환
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
+    # 4) 손 랜드마크 감지
+    detection_result = detector.detect(mp_image)
+
+    # 5) 랜드마크 데이터프레임 생성
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
-    model = joblib.load('sign_language_model.joblib')
-    y_pred = model.predict(landmarks_df)        # [숫자]
+    if landmarks_df.empty:
+        return "NO_HAND_DETECTED"
 
-    result = chr(y_pred[0] + ord('A'))          # 대문자 알파벳
-
+    # 6) 사전 학습된 모델(joblib)로 예측
+    model = joblib.load(joblib_path)
+    y_pred = model.predict(landmarks_df)  # [숫자]
+    result = chr(y_pred[0] + ord('A'))    # 대문자 알파벳으로 변환
     return result
 
 
-
-
-import cv2
-import streamlit as st
-
 def finger_landmark_visualization(image_dir: str):
-    # MediaPipe HandLandmarker 초기화
-    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    """
+    이미지 파일을 입력받아, 손 랜드마크를 시각화한 이미지를 Streamlit으로 표시.
+    """
+    # 1) Mediapipe model buffer 로드
+    with open(model_path, "rb") as f:
+        model_data = f.read()
+
+    # 2) HandLandmarker 초기화 (buffer 활용)
+    base_options = python.BaseOptions(model_asset_buffer=model_data)
     options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
     detector = vision.HandLandmarker.create_from_options(options)
 
-    image1 = mp.Image.create_from_file(image_dir)
-    detection_result = detector.detect(image1)
+    # 3) 이미지 로드 (Mediapipe Image)
+    image_mp = mp.Image.create_from_file(image_dir)
+    detection_result = detector.detect(image_mp)
+
+    # 4) 랜드마크 -> DataFrame
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
+    if landmarks_df.empty:
+        st.error("손이 검출되지 않았습니다.")
+        return
 
-    image2 = cv2.imread(image_dir)
-    landmark_index = dict()
-    tmp = [[0, 1, 5, 9, 13, 17],
-           [2, 3, 4],
-           [6, 7, 8],
-           [10, 11, 12],
-           [14, 15, 16],
-           [18, 19, 20]]
+    # 5) OpenCV 이미지 로드
+    image_cv = cv2.imread(image_dir)
+    if image_cv is None:
+        st.error("이미지를 로드할 수 없습니다.")
+        return
 
+    # 6) 손가락 라인 / 랜드마크 표시를 위한 인덱스 구성
+    #    (Mediapipe에서 추천하는 손가락 연결 구조 등)
+    #    예: tmp는 특정 관절 인덱스 리스트
+    tmp = [
+        [0, 1, 5, 9, 13, 17],
+        [2, 3, 4],
+        [6, 7, 8],
+        [10, 11, 12],
+        [14, 15, 16],
+        [18, 19, 20]
+    ]
+    landmark_index = {}
     for i, v in enumerate(tmp):
         for j in v:
             landmark_index[j] = i
-    
-    color = [(48, 48, 255), (180, 229, 255), (128, 64, 128),
-             (0, 204, 255), (48, 255, 48), (192, 101, 21)]
 
-    h, w, _ = image2.shape
+    color = [
+        (48, 48, 255),
+        (180, 229, 255),
+        (128, 64, 128),
+        (0, 204, 255),
+        (48, 255, 48),
+        (192, 101, 21)
+    ]
 
+    h, w, _ = image_cv.shape
+
+    # 7) 각 랜드마크 좌표를 픽셀 단위로 변환하여 원 그리기
     for i in range(0, len(landmarks_df.columns), 3):
-        group = landmarks_df.iloc[0, i:i+3].tolist()  # Series를 리스트로 변환
-        index = i // 3
-        j = landmark_index[index]
-        lx = group[0]
-        ly = group[1]
+        group = landmarks_df.iloc[0, i:i+3].tolist()  # Series -> list
+        index = i // 3  # landmark 인덱스 (0~20)
 
+        # tmp/landmark_index를 통해 어떤 손가락 그룹에 속하는지 결정
+        group_id = landmark_index.get(index, 0)
+
+        lx, ly, lz = group  # (x, y, z)
         px = int(lx * w)
         py = int(ly * h)
 
-        cv2.circle(image2, (px, py), 2, color[j], -1)
+        cv2.circle(image_cv, (px, py), 2, color[group_id], -1)
 
-    st.image(image2)
+    st.image(image_cv, caption="손 랜드마크 시각화 결과")

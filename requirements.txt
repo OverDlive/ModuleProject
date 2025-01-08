@@ -1,18 +1,18 @@
 # AI 및 얼굴 및 손동작 인식 관련 패키지
-mediapipe==0.10.3
-opencv-python==4.8.0.74
+mediapipe
+opencv-python
 
 # UI 개발 관련 패키지
-streamlit==1.25.0
+streamlit
 
 # 유틸리티 및 로그 관리
-pyyaml==6.0
-loguru==0.7.1
+pyyaml
+loguru
 
 # 테스트 및 디버깅
-pytest==7.4.0
-pytest-mock==3.11.1
+pytest
+pytest-mock
 
 # 기타 유틸리티
-numpy==1.25.2
-pandas==2.1.0  # 데이터 관리에 유용
+numpy
+pandas
