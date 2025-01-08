@@ -3,6 +3,10 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import joblib
+import os
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(script_dir, 'hand_landmarker.task')
 
 def convert_landmarks_to_dataframe(detection_result):
     """
@@ -44,7 +48,7 @@ def convert_landmarks_to_dataframe(detection_result):
 
 def predict_sign(image_dir: str) -> str:
     # MediaPipe HandLandmarker 초기화
-    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    base_options = python.BaseOptions(model_asset_path=model_path)
     options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
     detector = vision.HandLandmarker.create_from_options(options)
 
