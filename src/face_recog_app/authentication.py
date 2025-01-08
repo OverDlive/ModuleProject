@@ -80,7 +80,7 @@ def authenticate_face_and_gesture(name, selected_gesture):
         else:
             log_access(user_id, "failure", "손동작 인증 실패")
             cap.release()
-            return f"손동작 인증 실패: {gesture} - 저장된 제스처와 일치하지 않음.", frame
+            return f"손동작 인증 실패: {gesture} - 저장된 {selected_gesture}제스처와 일치하지 않음.", frame
     else:
         log_access(user_id, "failure", "얼굴 유사도 낮음")
         cap.release()

@@ -65,9 +65,9 @@ def add_user(name: str,
     pickled_face_data = pickle.dumps(face_data)  # BLOB로 직렬화
 
     cursor.execute('''
-        INSERT INTO users (user_id, name, face_data, role, gesture_auth)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, name, pickled_face_data, role, gesture_auth))
+        INSERT INTO users (user_id, name, face_data, role)
+        VALUES (?, ?, ?, ?)
+    ''', (user_id, name, pickled_face_data, role))
 
     conn.commit()
     conn.close()

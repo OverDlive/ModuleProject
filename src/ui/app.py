@@ -13,14 +13,8 @@ import cv2
 
 # Streamlit 앱 실행
 def run_app():
-    alphabet = 'S'
+    st.title('얼굴 인식 및 손동작 제스처 관리 시스템')
 
-    st.markdown(
-        f"""
-        <h1>얼굴 인식 및 손동작 제스처 관리 시스템 - 오늘의 알파벳은 <span style="color:red">{alphabet}</span></h1>
-        """, 
-        unsafe_allow_html=True
-    )
     st.sidebar.title("메뉴")
     menu = st.sidebar.selectbox("선택하세요", ["캡처 및 저장", "사용자 조회", "사용자 삭제", "얼굴 및 손동작 인증"])
 
@@ -29,15 +23,17 @@ def run_app():
         initialize_database()
         st.session_state.db_initialized = True
 
+    # 선택지 목록
+    gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+    # 선택 박스 생성
+    st.sidebar.title('인증 제스처')
+    selected_option = st.sidebar.selectbox("선택", gesture_options)
+    # 선택된 옵션 표시
+    st.write(f"선택된 옵션: {selected_option}")
+
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
         name = st.text_input("사용자 이름 입력")
-        # 선택지 목록
-        gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
-        # 선택 박스 생성
-        selected_option = st.selectbox("인증 수단으로 사용할 제스처를 선택하세요:", gesture_options)
-        # 선택된 옵션 표시
-        st.write(f"선택된 옵션: {selected_option}")
         capture_count = st.number_input("캡처할 이미지 수", min_value=1, max_value=10, value=6, step=1)
 
         # 세션 상태 초기화

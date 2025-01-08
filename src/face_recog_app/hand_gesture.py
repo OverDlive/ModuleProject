@@ -11,11 +11,12 @@ import cv2
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(script_dir, 'gesture_recognizer.task')
-#path = 'C:\Users\user\Desktop\ModulePJ_1\ModuleProject\src\face_recog_app\hand_gesture.py'
-print(model_path)
+model_file = open(model_path, "rb")
+model_data = model_file.read()
+model_file.close()
 
 # STEP 1: Create an GestureRecognizer object.
-base_options = python.BaseOptions(model_asset_path=model_path)
+base_options = python.BaseOptions(model_asset_buffer=model_data)
 options = vision.GestureRecognizerOptions(base_options=base_options)
 recognizer = vision.GestureRecognizer.create_from_options(options)
 
@@ -30,15 +31,18 @@ def gesture_detect(frame):
 
     # 이후 MediaPipe 모델에 mp_image_instance 전달
     # STEP 3: Load the input image.
-    image = mp.Image.create_from_file(mp_image_instance)
+    #image = mp.Image.create_from_file(mp_image_instance)
 
     # STEP 4: Recognize gestures in the input image.
-    recognition_result = recognizer.recognize(image)
+    recognition_result = recognizer.recognize(mp_image_instance)
 
     # STEP 5: 제스처의 종류 반환
-    top_gesture = recognition_result.gestures[0][0]
-
-    return top_gesture
+    # top_gesture의 형태 : Category(index=-1, score=0.8197612762451172, display_name='', category_name='Pointing_Up')
+    if recognition_result.gestures:  # gestures 리스트가 비어 있지 않으면
+        top_gesture = recognition_result.gestures[0][0]
+        return top_gesture.category_name  # 제스처의 종류 반환
+    else:
+        return "No gesture recognized"  # 제스처가 인식되지 않았을 경우 처리
 
 '''
 # Mediapipe 설정
