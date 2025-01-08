@@ -1,5 +1,5 @@
 # AI 및 얼굴 및 손동작 인식 관련 패키지
-mediapip
+mediapipe
 opencv-python
 
 # UI 개발 관련 패키지
