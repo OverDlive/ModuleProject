@@ -1,3 +1,4 @@
+import cv2
 import streamlit as st
 from face_recog_app.detection import (
     capture_images_from_webcam,
@@ -18,11 +19,12 @@ from database.db_control import (
     log_access
 )
 import numpy as np
-import cv2
 
 def run_app():
+    # 앱 제목
     st.markdown("<h1>얼굴 및 손동작 제스처 관리 시스템</h1>", unsafe_allow_html=True)
 
+    # 사이드바 메뉴 설정
     st.sidebar.title("메뉴")
     menu = st.sidebar.selectbox(
         "선택하세요",
@@ -63,17 +65,35 @@ def run_app():
                         use_container_width=True
                     )
 
-                    # DB 저장 버튼
-                    if st.button("데이터베이스에 저장"):
-                        if not name.strip():
-                            st.error("사용자 이름을 입력하세요.")
-                        else:
-                            user_id = add_user(name, face_landmarks, hand_landmarks)
-                            st.success(f"사용자 '{name}'의 얼굴/손 데이터가 저장되었습니다. (User ID: {user_id})")
+                    # 캡처된 랜드마크를 세션 상태에 저장
+                    st.session_state['captured_face_landmarks'] = [face_landmarks]
+                    st.session_state['captured_hand_landmarks'] = [hand_landmarks]
+
+                    st.success("캡처가 완료되었습니다. '데이터베이스에 저장' 버튼을 눌러 저장하세요.")
                 else:
                     st.error("얼굴 또는 손동작 랜드마크를 추출할 수 없습니다.")
             else:
                 st.error("이미지 캡처에 실패했습니다.")
+
+        # 데이터베이스에 저장 버튼 (캡처 후 활성화)
+        if "captured_face_landmarks" in st.session_state and "captured_hand_landmarks" in st.session_state:
+            if st.button("데이터베이스에 저장"):
+                if not name.strip():
+                    st.error("사용자 이름을 입력하세요.")
+                else:
+                    try:
+                        user_id = add_user(
+                            name,
+                            st.session_state['captured_face_landmarks'],
+                            st.session_state['captured_hand_landmarks']
+                        )
+                        st.success(f"사용자 '{name}'의 얼굴/손 데이터가 저장되었습니다. (User ID: {user_id})")
+
+                        # 세션 상태 초기화
+                        del st.session_state['captured_face_landmarks']
+                        del st.session_state['captured_hand_landmarks']
+                    except Exception as e:
+                        st.error(f"데이터베이스 저장 중 오류가 발생했습니다: {e}")
 
     # ─────────────────────────────────────────
     # 2) "사용자 조회"
@@ -120,18 +140,22 @@ def run_app():
                 st.error("사용자 이름을 입력하세요.")
             else:
                 # 얼굴 및 손동작 인증: 단 한 번의 캡처
-                result, frame = authenticate_face_and_gesture(name)
-                # authenticate_face_and_gesture(name) 내부에서:
-                #  - capture_images_from_webcam(1장)
-                #  - extract_landmarks(얼굴), extract_hand_landmarks(손)
-                #  - DB의 face_data, gesture_data와 비교
-                #  - 결과 문자열, 사용된 frame 반환
+                try:
+                    result, frame = authenticate_face_and_gesture(name)
+                except Exception as e:
+                    st.error(f"인증 중 오류가 발생했습니다: {e}")
+                    result, frame = None, None
 
+                # 인증에 사용된 이미지 표시
                 if frame is not None:
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     st.image(frame_rgb, caption="인증에 사용된 이미지", use_container_width=True)
 
-                if "인증 성공" in result:
-                    st.success(result)
+                # 인증 결과 표시
+                if result:
+                    if "인증 성공" in result:
+                        st.success(result)
+                    else:
+                        st.error(result)
                 else:
-                    st.error(result)
+                    st.error("인증 결과를 가져올 수 없습니다.")
