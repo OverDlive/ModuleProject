@@ -70,7 +70,7 @@ def predict_sign(frame) -> str:
     detection_result = detector.detect(mp_image)
 
     # 손 영역 잘라내기
-    frame = crop_to_hand_area(frame, detection_result)
+    #frame = crop_to_hand_area(frame, detection_result)
 
     # 랜드마크 데이터 프레임 생성
     landmarks_df = convert_landmarks_to_dataframe(detection_result)
