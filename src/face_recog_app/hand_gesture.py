@@ -15,7 +15,7 @@ model_path = os.path.join(script_dir, 'gesture_recognizer.task')
 print(model_path)
 
 # STEP 1: Create an GestureRecognizer object.
-base_options = python.BaseOptions(model_asset_path=path)
+base_options = python.BaseOptions(model_asset_path=model_path)
 options = vision.GestureRecognizerOptions(base_options=base_options)
 recognizer = vision.GestureRecognizer.create_from_options(options)
 

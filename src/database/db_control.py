@@ -16,7 +16,6 @@ def initialize_database(db_name: str = "face_access_control.db"):
             face_data BLOB NOT NULL,
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             role TEXT DEFAULT 'user'
-            gesture_auth TEXT DEFAULT NULL -- 제스처 인증 수단 추가
         );
         ''')
 
@@ -52,9 +51,8 @@ def initialize_database(db_name: str = "face_access_control.db"):
 def add_user(name: str, 
              face_data: List[List[Tuple[float, float, float]]],  # 여러 장이면 List[List[...]]
              db_name: str = "face_access_control.db",
-             role: str = "user",
-             gesture_auth: Optional[str] = None
-             ) -> str:
+             role: str = "user"
+            ) -> str:
     """
     name: 사용자 이름
     face_data: 여러 장의 이미지 랜드마크를 저장하려면 List[List[Tuple]]] 구조를 권장
