@@ -57,7 +57,7 @@ def run_app():
                     # 얼굴 및 손 랜드마크 시각화
                     annotated_frame = images[0].copy()
                     annotated_frame = draw_landmarks(annotated_frame, face_landmarks, is_face=True)
-                    annotated_frame = draw_landmarks(annotated_frame, hand_landmarks, is_face=False)  # is_face=False 가정
+                    annotated_frame = draw_landmarks(annotated_frame, hand_landmarks, is_face=True)  # is_face=False 가정
 
                     st.image(
                         cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB),
