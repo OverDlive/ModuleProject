@@ -79,11 +79,11 @@ def authenticate_face_and_gesture(name, today_alphabet=None):
         similarity_results.append(similarity)
         st.write(f"저장된 랜드마크 {idx+1}과의 유사도: {similarity}")
 
-    # 유사도가 120 미만인 경우 카운트
-    successful_matches = sum(1 for similarity in similarity_results if similarity < 120)
+    # 유사도가 70 미만인 경우 카운트
+    successful_matches = sum(1 for similarity in similarity_results if similarity < 70)
     st.write(f"유사도가 120 미만인 랜드마크 수: {successful_matches} / {len(saved_face_landmarks)}")
 
-    # 절반 이상 유사도가 120 미만이면 얼굴 인증 성공
+    # 절반 이상 유사도가 70 미만이면 얼굴 인증 성공
     if successful_matches >= len(saved_face_landmarks) / 2:
         log_access(user_id, "success", "얼굴 인증 성공")
         st.success("얼굴 인증 성공")
