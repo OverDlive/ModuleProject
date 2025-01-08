@@ -16,7 +16,7 @@ def calculate_similarity(landmarks1, landmarks2):
     return np.mean(diff)
 
 # 얼굴 인증 함수
-def authenticate_face_and_gesture(name, today_alphabet):
+def authenticate_face_and_gesture(name, ttoday_alphabet=None):
     # 데이터베이스에서 사용자 정보 가져오기
     user = find_user_by_name(name)
     if not user:
