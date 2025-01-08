@@ -76,11 +76,11 @@ def authenticate_face_and_gesture(name, today_alphabet):
         if gesture == today_alphabet:
             log_access(user_id, "success", "얼굴 및 손동작 인증 성공")
             cap.release()
-            return f"인증 성공: {name}", frame
+            return f"인증 성공: {name}, 제스처 알파벳: {gesture}", frame
         else:
             log_access(user_id, "failure", "손동작 인증 실패")
             cap.release()
-            return "손동작 인증 실패: 오늘의 알파벳과 일치하지 않음.", frame
+            return f"손동작 인증 실패: {gesture} - 오늘의 알파벳과 일치하지 않음.", frame
     else:
         log_access(user_id, "failure", "얼굴 유사도 낮음")
         cap.release()
