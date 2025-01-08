@@ -20,26 +20,26 @@ def authenticate_face_and_gesture(name, today_alphabet):
     # 데이터베이스에서 사용자 정보 가져오기
     user = find_user_by_name(name)
     if not user:
-        return "해당 이름으로 저장된 얼굴 랜드마크가 없습니다."
+        return "해당 이름으로 저장된 얼굴 랜드마크가 없습니다.", None
 
     user_id, user_name, saved_landmarks, role = user
 
     # 웹캠 열기
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        return "웹캠을 열 수 없습니다."
+        return "웹캠을 열 수 없습니다.", None
 
     # 이미지 캡처
     ret, frame = cap.read()
     if not ret:
         cap.release()
-        return "이미지를 캡처할 수 없습니다."
+        return "이미지를 캡처할 수 없습니다.", None
 
     # 얼굴 랜드마크 추출
     landmarks = extract_landmarks(frame)  # 이제 detection.py에서 호출
     if not landmarks:
         cap.release()
-        return "얼굴 랜드마크를 추출할 수 없습니다."
+        return "얼굴 랜드마크를 추출할 수 없습니다.", frame
 
     # 유사도 계산 (저장된 랜드마크와 비교)
     similarity_results = []
@@ -61,12 +61,12 @@ def authenticate_face_and_gesture(name, today_alphabet):
         if gesture == today_alphabet:
             log_access(user_id, "success", "얼굴 및 손동작 인증 성공")
             cap.release()
-            return f"인증 성공: {name}"
+            return f"인증 성공: {name}", frame
         else:
             log_access(user_id, "failure", "손동작 인증 실패")
             cap.release()
-            return "손동작 인증 실패: 오늘의 알파벳과 일치하지 않음."
+            return "손동작 인증 실패: 오늘의 알파벳과 일치하지 않음.", frame
     else:
         log_access(user_id, "failure", "얼굴 유사도 낮음")
         cap.release()
-        return "인증 실패: 얼굴 유사도가 낮습니다."
+        return "인증 실패: 얼굴 유사도가 낮습니다.", frame

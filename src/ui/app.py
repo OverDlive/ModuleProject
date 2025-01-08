@@ -102,7 +102,16 @@ def run_app():
             if not name.strip():
                 st.error("사용자 이름을 입력하세요.")
             else:
-                result = authenticate_face_and_gesture(name, alphabet)
+                # 얼굴 및 손동작 인증 함수 호출
+                result, frame = authenticate_face_and_gesture(name, alphabet)
+
+                # 캡처된 이미지 출력
+                if frame is not None:
+                    # OpenCV 이미지를 RGB로 변환
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    st.image(frame_rgb, caption="캡처된 이미지", use_container_width=True)
+
+                # 인증 결과 출력
                 if "인증 성공" in result:
                     st.success(result)
                 else:
