@@ -1,106 +1,104 @@
-import os
-import cv2
+import pandas as pd
 import mediapipe as mp
-import streamlit as st
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import joblib
-import pandas as pd
+import os
+import numpy as np
+from tensorflow.keras.models import load_model
+from sklearn.preprocessing import LabelEncoder
+import cv2
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(script_dir, 'hand_landmarker.task')
-joblib_path = os.path.join(script_dir, 'sign_language_model.joblib')
+model_path = os.path.join(script_dir, 'gesture_recognizer.task')
+model_file = open(model_path, "rb")
+model_data = model_file.read()
+model_file.close()
 
-def convert_landmarks_to_dataframe(detection_result):
-    """ Mediapipe HandLandmarker → pandas DataFrame 변환 """
-    all_hands_data = []
-    if detection_result.hand_landmarks:
-        for hand_idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
-            hand_data = []
-            for lm in hand_landmarks:
-                hand_data.extend([lm.x, lm.y, lm.z])
-            # 딕셔너리 생성
-            hand_dict = {
-                'hand_index': hand_idx,
-                **{
-                    f'landmark_{i}_{coord}': val
-                    for i in range(21)
-                    for coord, val in zip(['x','y','z'], hand_data[i*3:(i+1)*3])
-                }
-            }
-            all_hands_data.append(hand_dict)
-    df = pd.DataFrame(all_hands_data)
-    if 'hand_index' in df.columns:
-        df.drop('hand_index', axis=1, inplace=True)
-    return df
+# STEP 1: Create an GestureRecognizer object.
+base_options = python.BaseOptions(model_asset_buffer=model_data)
+options = vision.GestureRecognizerOptions(base_options=base_options)
+recognizer = vision.GestureRecognizer.create_from_options(options)
 
-def predict_sign(frame):
+# MediaPipe 이미지 처리 초기화
+mp_image = mp.Image
+
+def gesture_detect(frame):
+    # STEP 2: OpenCV에서 캡처한 프레임을 MediaPipe Image로 변환
+    if frame.dtype != np.uint8:
+        frame = frame.astype(np.uint8)  # uint8로 변환
+    mp_image_instance = mp_image(image_format=mp.ImageFormat.SRGB, data=frame)
+
+    # 이후 MediaPipe 모델에 mp_image_instance 전달
+    # STEP 3: Load the input image.
+    #image = mp.Image.create_from_file(mp_image_instance)
+
+    # STEP 4: Recognize gestures in the input image.
+    recognition_result = recognizer.recognize(mp_image_instance)
+
+    # STEP 5: 제스처의 종류 반환
+    # top_gesture의 형태 : Category(index=-1, score=0.8197612762451172, display_name='', category_name='Pointing_Up')
+    if recognition_result.gestures:  # gestures 리스트가 비어 있지 않으면
+        top_gesture = recognition_result.gestures[0][0]
+        return top_gesture.category_name  # 제스처의 종류 반환
+    else:
+        return "No gesture recognized"  # 제스처가 인식되지 않았을 경우 처리
+
+'''
+# Mediapipe 설정
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.3)
+
+# 모델 로드
+model = load_model(model_path)
+
+# 레이블 디코딩 설정 (학습 시 사용한 LabelEncoder)
+label_encoder = LabelEncoder()
+label_encoder.classes_ = np.array(list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))  # 알파벳 A-Z
+
+# 손 랜드마크 추출 함수
+def extract_landmarks_hand(image):
+    # image가 이미 OpenCV 이미지 객체(NumPy 배열)인 경우 처리
+    if isinstance(image, np.ndarray):
+        # 이미지 처리를 바로 진행
+        #image_resized = cv2.resize(image, (256, 256))  # 예: 256x256으로 크기 조정
+        #image_normalized = image_resized / 255.0  # 픽셀 정규화
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # RGB변환
+        result = hands.process(image_rgb)
+    else:
+        raise ValueError("Input should be a valid image object (NumPy array)")
+    
+    if result.multi_hand_landmarks:
+        hand_landmarks = result.multi_hand_landmarks[0]
+        landmarks = np.array([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark])
+        return normalize_landmarks(landmarks)
+    else:
+        return None
+
+def normalize_landmarks(landmarks):
     """
-    단일 OpenCV 이미지(frame)에서 손 랜드마크를 추출한 뒤,
-    사전학습된 sign_language_model.joblib을 이용해 알파벳 예측
+    손 랜드마크를 손목 기준으로 정규화하고 스케일 조정.
+    
+    Args:
+        landmarks (np.ndarray): 손 랜드마크 좌표 (21, 3).
+
+    Returns:
+        np.ndarray: 정규화된 손 랜드마크 좌표 (63,).
     """
-    if not os.path.exists(model_path):
-        print("[predict_sign] hand_landmarker.task 파일을 찾을 수 없습니다.")
-        return "NO_HAND_MODEL"
-    if not os.path.exists(joblib_path):
-        print("[predict_sign] sign_language_model.joblib 파일을 찾을 수 없습니다.")
-        return "NO_SIGN_MODEL"
+    wrist = landmarks[0]  # 손목 랜드마크
+    normalized = landmarks - wrist  # 상대 좌표 계산
+    max_value = np.max(np.abs(normalized))  # 최대 절대값
+    scaled = normalized / max_value  # 최대값으로 정규화
+    return scaled.flatten()
 
-    # 1) Mediapipe HandLandmarker 초기화
-    with open(model_path, "rb") as f:
-        model_data = f.read()
-    base_options = python.BaseOptions(model_asset_buffer=model_data)
-    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
-    detector = vision.HandLandmarker.create_from_options(options)
-
-    # 2) Mediapipe Image 변환 후 감지
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-    detection_result = detector.detect(mp_image)
-
-    # 3) 랜드마크 → DataFrame 변환
-    landmarks_df = convert_landmarks_to_dataframe(detection_result)
-    if landmarks_df.empty:
-        return "NO_HAND_DETECTED"
-
-    # 4) 모델 로드 및 예측
-    model = joblib.load(joblib_path)
-    y_pred = model.predict(landmarks_df)
-    result = chr(y_pred[0] + ord('A'))  # 예: 0->'A', 1->'B', ...
-    return result
-
-def finger_landmark_visualization(image_path: str):
-    """ (기존과 동일) """
-    image_cv = cv2.imread(image_path)
-    if image_cv is None:
-        st.error("이미지를 로드할 수 없습니다.")
-        return
-
-    # 손 랜드마크 감지
-    # => 예: predict_sign와 유사하지만, 단순 좌표만 표시
-    if not os.path.exists(model_path):
-        st.error("hand_landmarker.task 파일이 없습니다.")
-        return
-    with open(model_path, "rb") as f:
-        model_data = f.read()
-    base_options = python.BaseOptions(model_asset_buffer=model_data)
-    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
-    detector = vision.HandLandmarker.create_from_options(options)
-
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_cv)
-    detection_result = detector.detect(mp_image)
-
-    # 좌표 시각화
-    df = convert_landmarks_to_dataframe(detection_result)
-    if df.empty:
-        st.error("손이 검출되지 않았습니다.")
-        return
-
-    h, w, _ = image_cv.shape
-    for i in range(0, len(df.columns), 3):
-        group = df.iloc[0, i:i+3].tolist()
-        lx, ly, lz = group
-        px = int(lx * w)
-        py = int(ly * h)
-        cv2.circle(image_cv, (px, py), 3, (0,255,0), -1)
-
-    st.image(image_cv, caption="손 랜드마크 시각화 결과")
+# 테스트 함수
+def test_hand_gesture(image):
+    landmarks = extract_landmarks_hand(image)
+    if landmarks is not None:
+        landmarks = landmarks.reshape(1, -1)  # 모델 입력 형식에 맞게 변환
+        prediction = model.predict(landmarks)
+        predicted_label = label_encoder.inverse_transform([np.argmax(prediction)])
+        return predicted_label[0]#, np.max(prediction)  # 예측 레이블과 확률 반환
+    else:
+        return "No hand detected", 0.0
+'''
