@@ -90,7 +90,7 @@ def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, st
         name = row[1]
         face_data = pickle.loads(row[2])  # BLOB에서 직렬화된 데이터 복원
         gesture_option = row[3]
-        role = row[3]
+        role = row[4]
         users.append((user_id, name, face_data, gesture_option, role))
 
     conn.close()
