@@ -24,17 +24,21 @@ def run_app():
         st.session_state.db_initialized = True
 
     # 선택지 목록
-    gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+    #gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
     # 선택 박스 생성
-    st.sidebar.title('인증 제스처')
-    selected_option = st.sidebar.selectbox("선택", gesture_options)
+    #st.sidebar.title('인증 제스처')
+    #selected_option = st.sidebar.selectbox("선택", gesture_options)
     # 선택된 옵션 표시
-    st.write(f"선택된 옵션: {selected_option}")
+    #st.write(f"선택된 옵션: {selected_option}")
 
     # 캠처 및 저장장
     if menu == "캡처 및 저장":
         st.header("캡처 및 저장")
         name = st.text_input("사용자 이름 입력")
+        # 선택지 목록
+        gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+        # 선택 박스 생성
+        selected_option = st.selectbox('선택', gesture_options)
         capture_count = st.number_input("캡처할 이미지 수", min_value=1, max_value=10, value=6, step=1)
 
         # 세션 상태 초기화
@@ -68,7 +72,7 @@ def run_app():
                 if not name.strip():
                     st.error("사용자 이름을 입력하세요.")
                 else:
-                    user_id = add_user(name, st.session_state.all_landmarks)
+                    user_id = add_user(name, st.session_state.all_landmarks, selected_option)
                     st.success(f"{name}의 얼굴 데이터가 성공적으로 저장되었습니다. (User ID: {user_id})")
 
                     # 저장 후 세션 상태 초기화
@@ -82,8 +86,8 @@ def run_app():
         if users:
             st.write("저장된 사용자 목록:")
             for user in users:
-                user_id, user_name, face_data, role = user
-                st.write(f"- **ID**: {user_id}, **이름**: {user_name}, **역할**: {role}, 얼굴 랜드마크 개수: {len(face_data)}")
+                user_id, user_name, face_data, gesture_options, role = user
+                st.write(f"- **ID**: {user_id}, **이름**: {user_name}, **제스처**: {gesture_options}, **역할**: {role}, 얼굴 랜드마크 개수: {len(face_data)}")
         else:
             st.info("등록된 사용자가 없습니다.")
 
@@ -108,7 +112,7 @@ def run_app():
                 st.error("사용자 이름을 입력하세요.")
             else:
                 # 얼굴 및 손동작 인증 함수 호출
-                result, frame = authenticate_face_and_gesture(name, selected_option)
+                result, frame = authenticate_face_and_gesture(name)
 
                 # 캡처된 이미지 출력
                 if frame is not None:

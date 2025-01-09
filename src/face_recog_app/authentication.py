@@ -28,13 +28,13 @@ def calculate_similarity(landmarks1, landmarks2):
     return adjusted'''
 
 # 얼굴 인증 함수
-def authenticate_face_and_gesture(name, selected_gesture):
+def authenticate_face_and_gesture(name):
     # 데이터베이스에서 사용자 정보 가져오기
     user = find_user_by_name(name)
     if not user:
         return "해당 이름으로 저장된 얼굴 랜드마크가 없습니다.", None
 
-    user_id, user_name, saved_landmarks, role = user
+    user_id, user_name, saved_landmarks, selected_gesture, role = user
 
     # 웹캠 열기
     cap = cv2.VideoCapture(0)
@@ -63,7 +63,7 @@ def authenticate_face_and_gesture(name, selected_gesture):
         similarity_results.append(similarity)
 
     # 유사도가 120 미만인 경우 카운트
-    successful_matches = sum(1 for similarity in similarity_results if similarity < 120)
+    successful_matches = sum(1 for similarity in similarity_results if similarity < 0.1)
     
     # 절반 이상 유사도가 120 미만이면 인증 성공
     if successful_matches >= len(saved_landmarks) / 2:
@@ -84,4 +84,4 @@ def authenticate_face_and_gesture(name, selected_gesture):
     else:
         log_access(user_id, "failure", "얼굴 유사도 낮음")
         cap.release()
-        return "인증 실패: 얼굴 유사도가 낮습니다.", frame
+        return f"인증 실패: 얼굴 유사도가 낮습니다. 유사도 : {similarity_results}", frame

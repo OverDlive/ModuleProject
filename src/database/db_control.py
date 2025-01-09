@@ -14,6 +14,7 @@ def initialize_database(db_name: str = "face_access_control.db"):
             user_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             face_data BLOB NOT NULL,
+            gesture_option TEXT NOT NULL,
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             role TEXT DEFAULT 'user'
         );
@@ -50,6 +51,7 @@ def initialize_database(db_name: str = "face_access_control.db"):
 # 사용자 추가 (직렬화 포함)
 def add_user(name: str, 
              face_data: List[List[Tuple[float, float, float]]],  # 여러 장이면 List[List[...]]
+             gesture_option: str,  # 추가
              db_name: str = "face_access_control.db",
              role: str = "user"
             ) -> str:
@@ -65,9 +67,9 @@ def add_user(name: str,
     pickled_face_data = pickle.dumps(face_data)  # BLOB로 직렬화
 
     cursor.execute('''
-        INSERT INTO users (user_id, name, face_data, role)
-        VALUES (?, ?, ?, ?)
-    ''', (user_id, name, pickled_face_data, role))
+        INSERT INTO users (user_id, name, face_data, gesture_option, role)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (user_id, name, pickled_face_data, gesture_option, role))
 
     conn.commit()
     conn.close()
@@ -79,7 +81,7 @@ def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, st
     cursor = conn.cursor()
 
     cursor.execute('''
-    SELECT user_id, name, face_data, role FROM users
+    SELECT user_id, name, face_data, gesture_option, role FROM users
     ''')
 
     users = []
@@ -87,8 +89,9 @@ def get_all_users(db_name: str = "face_access_control.db") -> List[Tuple[str, st
         user_id = row[0]
         name = row[1]
         face_data = pickle.loads(row[2])  # BLOB에서 직렬화된 데이터 복원
+        gesture_option = row[3]
         role = row[3]
-        users.append((user_id, name, face_data, role))
+        users.append((user_id, name, face_data, gesture_option, role))
 
     conn.close()
     return users
@@ -99,7 +102,7 @@ def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Opt
     cursor = conn.cursor()
 
     cursor.execute('''
-    SELECT user_id, name, face_data, role FROM users WHERE name = ?
+    SELECT user_id, name, face_data, gesture_option, role FROM users WHERE name = ?
     ''', (name,))
 
     row = cursor.fetchone()
@@ -108,8 +111,9 @@ def find_user_by_name(name: str, db_name: str = "face_access_control.db") -> Opt
         user_id = row[0]
         name = row[1]
         face_data = pickle.loads(row[2])  # BLOB에서 직렬화된 데이터 복원
+        gesture_option = row[3]
         role = row[3]
-        return (user_id, name, face_data, role)
+        return (user_id, name, face_data, gesture_option, role)
     return None
 
 # 사용자 이름으로 삭제
