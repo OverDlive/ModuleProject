@@ -33,7 +33,11 @@ def run_app():
 
     # 캠처 및 저장장
     if menu == "캡처 및 저장":
-        st.header("캡처 및 저장")
+        #st.header("캡처 및 저장 - 얼굴을 중앙에 위치해 주세요")
+        st.markdown(
+    '<h3>캡처 및 저장 - 얼굴을 <span style="color:red; font-weight:bold;">중앙에 위치</span>해 주세요</h3>',
+    unsafe_allow_html=True
+)
         name = st.text_input("사용자 이름 입력")
         # 선택지 목록
         gesture_options = ["Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
