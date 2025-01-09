@@ -16,7 +16,6 @@ from database.db_control import (
     get_all_users,
     find_user_by_name,
     delete_user_by_name,
-    log_access
 )
 import numpy as np
 

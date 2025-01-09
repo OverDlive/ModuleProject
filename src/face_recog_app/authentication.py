@@ -55,6 +55,9 @@ def authenticate_face_and_gesture(name, today_alphabet=None):
         cap.release()
         st.error("이미지를 캡처할 수 없습니다.")
         return "이미지를 캡처할 수 없습니다.", None
+    
+    # 전처리 적용
+    # frame = preprocess_image(frame)
 
     # 얼굴 랜드마크 추출
     face_landmarks = extract_landmarks(frame)
