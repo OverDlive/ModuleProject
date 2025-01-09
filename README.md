@@ -40,16 +40,27 @@
 
 ## 설치 및 실행 방법
 
-1. **필수 라이브러리 설치**:
+1. **레파지토리 복사**:
+   ```bash
+   git clone https://github.com/OverDlive/ModuleProject.git
+   ```
+
+2. **필수 라이브러리 설치**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **애플리케이션 실행**:
+3. **경로 변경**:
+   ```bash
+   cd ModuleProject/src
+   ```
+   
+4. **애플리케이션 실행**:
    ```bash
    streamlit run main.py
    ```
-3. **웹 인터페이스 접속**:
+   
+5. **웹 인터페이스 접속**:
    - 브라우저에서 `http://localhost:8501`로 접속
 
 ## 시스템 아키텍처
