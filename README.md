@@ -2,7 +2,7 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10&height=200&text=Module%20Project&fontSize=50&animation=twinkling&fontAlign=68&fontAlignY=36)
 ## 프로젝트 개요
 
-**실시간 얼굴 인식 접근 제어 시스템**은 얼굴 인식 기술을 활용하여 보안 구역에 대한 간단하고 효율적인 접근 제어를 제공하는 시스템입니다. 이 시스템은 MediaPipe AI API를 사용하여 실시간으로 얼굴을 탐지하고 인증하며, 데이터베이스와 비교하여 접근 권한을 관리합니다.
+**얼굴 인식 접근 제어 시스템**은 얼굴 인식 기술을 활용하여 보안 구역에 대한 간단하고 효율적인 접근 제어를 제공하는 시스템입니다. 이 시스템은 MediaPipe AI API를 사용하여 얼굴을 탐지하고 인증하며, 데이터베이스와 비교하여 접근 권한을 관리합니다.
 
 ## 프로젝트 팀
 
@@ -16,7 +16,7 @@
 
 ## 주요 목표
 
-- 실시간 얼굴 인식을 통한 안전하고 신뢰할 수 있는 접근 제어 구현
+- 얼굴 인식을 통한 안전하고 신뢰할 수 있는 접근 제어 구현
 - 기존 키카드나 비밀번호 접근 방식을 대체하는 사용자 친화적 시스템 제공
 
 ## 주요 기능
