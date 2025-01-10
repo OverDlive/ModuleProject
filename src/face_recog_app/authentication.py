@@ -55,15 +55,31 @@ def authenticate_face_and_gesture(name):
     if not landmarks:
         cap.release()
         return "얼굴 랜드마크를 추출할 수 없습니다.", frame
-
+    
     # 유사도 계산 (저장된 랜드마크와 비교)
     similarity_results = []
     for saved_landmark in saved_landmarks:
-        similarity = calculate_similarity(saved_landmark, landmarks)
+        # 인증부분에서 캡처한 얼굴의 랜드마크를 상대적인 위치로 변환
+        # 중심 랜드마크 선택 (예: 코 끝 부분, id=1로 가정)
+        central_landmark_id = 1
+        central_landmark_1 = saved_landmark[central_landmark_id]
+        central_landmark_2 = landmarks[central_landmark_id]
+        
+        # 중심 기준으로 상대적인 값으로 변환
+        relative_landmarks_1 = [
+            (x - central_landmark_1[0], y - central_landmark_1[1], z - central_landmark_1[2])
+            for x, y, z in saved_landmark
+        ]
+        relative_landmarks_2 = [
+            (x - central_landmark_2[0], y - central_landmark_2[1], z - central_landmark_2[2])
+            for x, y, z in landmarks
+        ]
+        similarity = calculate_similarity(relative_landmarks_1, relative_landmarks_2)
+        #similarity = calculate_similarity(saved_landmark, relative_landmarks)
         similarity_results.append(similarity)
 
-    # 유사도가 120 미만인 경우 카운트
-    successful_matches = sum(1 for similarity in similarity_results if similarity < 0.1)
+    # 유사도가 임계값 미만인 경우 카운트
+    successful_matches = sum(1 for similarity in similarity_results if similarity < 0.03)
     
     # 절반 이상 유사도가 120 미만이면 인증 성공
     if successful_matches >= len(saved_landmarks) / 2:
