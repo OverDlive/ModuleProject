@@ -65,7 +65,7 @@ def authenticate_face_and_gesture(name):
         central_landmark_1 = saved_landmark[central_landmark_id]
         central_landmark_2 = landmarks[central_landmark_id]
         
-        # 중심 기준으로 상대적인 값으로 변환
+        # 중심 기준으로 상대적인 값으로 변환 -> 얼굴의 위치가 달라도 제대로된 비교를 하기위함
         relative_landmarks_1 = [
             (x - central_landmark_1[0], y - central_landmark_1[1], z - central_landmark_1[2])
             for x, y, z in saved_landmark
